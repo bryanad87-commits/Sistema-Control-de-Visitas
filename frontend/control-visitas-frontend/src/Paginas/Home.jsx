@@ -1,5 +1,7 @@
-import { useState } from "react"; 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import JsBarcode from "jsbarcode";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
@@ -11,9 +13,84 @@ export default function Home() {
     const fechaHora = new Date().toLocaleString();
     const codigo = Math.floor(100000 + Math.random() * 900000);
 
-    setTicket({ ...formData, fechaHora, codigo });
+    const newTicket = { ...formData, fechaHora, codigo };
+    setTicket(newTicket);
     setShowForm(false);
     setShowTicket(true);
+    
+    // ✅ GENERAR PDF DESPUÉS DE REGISTRAR
+    generarPDF(newTicket);
+  };
+
+  // ✅ FUNCIÓN PARA GENERAR EL PDF
+  const generarPDF = (ticketData) => {
+    const doc = new jsPDF();
+    
+    // Configuración del documento
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("TICKET DE REGISTRO", 105, 20, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Nombre: ${ticketData.nombres} ${ticketData.apellidos}`, 20, 40);
+    doc.text(`DNI: ${ticketData.dni}`, 20, 50);
+    doc.text(`Departamento: ${ticketData.departamento}`, 20, 60);
+    doc.text(`Motivo: ${ticketData.motivo}`, 20, 70);
+    doc.text(`Fecha: ${ticketData.fechaHora}`, 20, 80);
+    doc.text(`Código: ${ticketData.codigo}`, 20, 90);
+
+    // Generar código de barras con el código
+    const canvas = document.createElement("canvas");
+    JsBarcode(canvas, ticketData.codigo.toString(), { 
+      format: "CODE128", 
+      width: 2, 
+      height: 40,
+      displayValue: true 
+    });
+    const barcodeImg = canvas.toDataURL("image/png");
+    doc.addImage(barcodeImg, "PNG", 55, 100, 100, 30);
+
+    // Añadir línea separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 95, 190, 95);
+
+    // ✅ ABRIR PDF EN NUEVA PESTAÑA
+    setTimeout(() => {
+      const pdfDataUrl = doc.output("datauristring");
+      const newWindow = window.open();
+      
+      if (newWindow) {
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Ticket de Visitante - ${ticketData.nombres}</title>
+              <style>
+                body { margin: 0; padding: 20px; background-color: #f5f5f5; }
+                .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+                h1 { color: #333; text-align: center; }
+                iframe { border: none; border-radius: 5px; width: 100%; height: 500px; }
+                .download-btn { display: block; margin: 20px auto; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>Ticket de Visitante</h1>
+                <iframe src="${pdfDataUrl}"></iframe>
+                <a href="${pdfDataUrl}" download="ticket-${ticketData.nombres}-${ticketData.codigo}.pdf" class="download-btn">
+                  Descargar Ticket
+                </a>
+              </div>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      } else {
+        // Fallback: descargar directamente
+        doc.save(`ticket-${ticketData.nombres}-${ticketData.codigo}.pdf`);
+      }
+    }, 500);
   };
 
   return (
