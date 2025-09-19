@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
+import { VisitantesContext } from "../Context/VisitantesContext";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [showTicket, setShowTicket] = useState(false);
   const [ticket, setTicket] = useState(null);
   const navigate = useNavigate();
+  const { agregarVisitante, visitantes } = useContext(VisitantesContext);
 
   const handleRegister = (formData) => {
     const fechaHora = new Date().toLocaleString();
     const codigo = Math.floor(100000 + Math.random() * 900000);
 
     const newTicket = { ...formData, fechaHora, codigo };
+    agregarVisitante(newTicket);
     setTicket(newTicket);
     setShowForm(false);
     setShowTicket(true);
