@@ -1,10 +1,13 @@
 from fastapi import FastAPI
-from app.database import init_db
-from .api import register_routes
+from app.database import Base,engine
+from app.routes import usuario
+from app import models
 
-app = FastAPI(title="Sistema de Control de Visitas", version="1.0.0") 
+Base.metadata.create_all(bind=engine)
 
-init_db()
+app = FastAPI(title="Sistema de Control de Visitas", version="1.0.0")
 
-# Registro de rutas
-register_routes(app)
+listaRutas = [usuario.router]
+
+for ruta in listaRutas:
+    app.include_router(ruta)
