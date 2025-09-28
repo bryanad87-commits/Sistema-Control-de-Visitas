@@ -1,13 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 class UsuarioBase(BaseModel):
     nombre: str
     apellido: str
     dni: str
-    email: str
+    email: EmailStr
     departamento: str
-    telefono: str | None = None
+    telefono: str
     rol: str
     
     class Config:
@@ -16,8 +16,9 @@ class UsuarioBase(BaseModel):
 class UsuarioCreate(UsuarioBase):
     password: str
 
-class UsuarioResponse(UsuarioBase):
+class UsuarioOut(UsuarioBase):
     id: int
     created_at: datetime
+    
     class Config:
         orm_mode = True

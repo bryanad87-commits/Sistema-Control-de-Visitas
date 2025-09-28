@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.usuario import Usuario
-from app.schemas.usuario import UsuarioCreate, UsuarioResponse
+from app.schemas.usuario import UsuarioCreate, UsuarioOut
 
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
-
+# Crear un nuevo usuario
 @router.post("/", response_model=UsuarioCreate, status_code=status.HTTP_201_CREATED)
 def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     db_usuario = db.query(Usuario).filter(Usuario.email == usuario.email).first()
@@ -29,14 +29,36 @@ def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
 
     return nuevo_usuario
 
-@router.get("/{usuario_id}", response_model=UsuarioResponse)
+# Obtener un usuario por ID
+@router.get("/{usuario_id}", response_model=UsuarioOut)
 def obtener_usuario(usuario_id: int, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
     return usuario
 
-@router.get("/", response_model=list[UsuarioResponse])
+# Listar todos los usuarios
+@router.get("/", response_model=list[UsuarioOut])
 def listar_usuarios(db: Session = Depends(get_db)):
     usuarios = db.query(Usuario).all()
     return usuarios
+
+# Actualizar un usuario
+@router.put("/{usuario_id}", response_model=UsuarioOut)
+def actualizar_usuario(usuario_id: int, usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    db_usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not db_usuario:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    
+    db_usuario.nombre = usuario.nombre
+    db_usuario.apellido = usuario.apellido
+    db_usuario.dni = usuario.dni
+    db_usuario.email = usuario.email
+    db_usuario.departamento = usuario.departamento
+    db_usuario.telefono = usuario.telefono
+    db_usuario.password = usuario.password
+    db_usuario.rol = usuario.rol
+
+    db.commit()
+    db.refresh(db_usuario)
+    return db_usuario

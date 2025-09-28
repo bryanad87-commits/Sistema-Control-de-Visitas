@@ -12,7 +12,7 @@ class Usuario(Base):
     dni = Column(String(20), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     departamento = Column(String(8),nullable = False)
-    telefono = Column(String(20), nullable=True)
+    telefono = Column(String(20), nullable=False)
     password = Column(String(255), nullable=False)
     rol = Column(String(20), nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.now)
